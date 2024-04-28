@@ -16,7 +16,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
                 Description = "API Key",
                 In = ParameterLocation.Header,
                 Schema = new OpenApiSchema() { Type = "String" },
-                //Required = true,
+                Required = false,
                 Example = new OpenApiString("pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp")
             });
         }

@@ -19,6 +19,7 @@ namespace AcmeCorpAPI.IntegrationTests
                                                   ITestOutputHelper testOutputHelper) 
 		{ 
             _client = factory.CreateClient();
+            _client.DefaultRequestHeaders.Add( "X-Api-Key", "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp");
             _testOutputHelper = testOutputHelper;
         }
 
