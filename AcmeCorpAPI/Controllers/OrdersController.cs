@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AcmeCorpAPI.Models;
@@ -23,9 +18,20 @@ namespace AcmeCorpAPI.Controllers
 
         // GET: api/Orders
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrder()
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrder()
         {
-            return await _context.Order.ToListAsync();
+            IEnumerable<Order> orderList =  await _context.Order.ToListAsync();
+
+            //map domain entities to CustomerDTO
+            IEnumerable<OrderDTO> orderDTOList = from order in orderList 
+                                                        select new OrderDTO() {
+                                                                Id = order.Id,
+                                                                Details = order.Details,
+                                                                OrderDate = order.OrderDate,
+                                                                CustomerId = order.CustomerId
+                                                        };
+
+            return Ok(orderDTOList);
         }
 
         // GET: api/Orders/5
@@ -39,18 +45,30 @@ namespace AcmeCorpAPI.Controllers
                 return NotFound();
             }
 
-            return order;
+            return Ok(new OrderDTO() {
+                            Id = order.Id,
+                            Details = order.Details,
+                            OrderDate = order.OrderDate,
+                            CustomerId = order.CustomerId
+                      });
         }
 
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
+        public async Task<IActionResult> PutOrder(int id, OrderDTO orderDTO)
         {
-            if (id != order.Id)
+            if (id != orderDTO.Id)
             {
                 return BadRequest();
             }
+
+            Order order = new Order() {
+                                        Id = orderDTO.Id,
+                                        Details = orderDTO.Details,
+                                        OrderDate = orderDTO.OrderDate,
+                                        CustomerId = orderDTO.CustomerId
+                                    };
 
             _context.Entry(order).State = EntityState.Modified;
 
@@ -82,8 +100,22 @@ namespace AcmeCorpAPI.Controllers
                                    Details = orderDTO.Details,
                                    OrderDate = orderDTO.OrderDate} ;
 
+            try{
             _context.Order.Add(order);
             await _context.SaveChangesAsync();
+            } 
+            catch (DbUpdateException)
+            {
+                // foreign key exception - associated customer does not exist
+                if (!CustomerExists(orderDTO.CustomerId))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             orderDTO.Id = order.Id;
             return CreatedAtAction("GetOrder", new { id = order.Id }, orderDTO);
@@ -108,6 +140,11 @@ namespace AcmeCorpAPI.Controllers
         private bool OrderExists(int id)
         {
             return _context.Order.Any(e => e.Id == id);
+        }
+
+        private bool CustomerExists(int id)
+        {
+            return _context.Customer.Any(e => e.Id == id);
         }
     }
 }

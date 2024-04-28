@@ -27,6 +27,7 @@ namespace AcmeCorpAPI.Controllers
         {
             IEnumerable<Customer> customerList = await _context.Customer.ToListAsync();
 
+            //map domain entities to CustomerDTO
             IEnumerable<CustomerDTO> customerDTOList = from customer in customerList 
                                                         select new CustomerDTO() {
                                                                 Id = customer.Id,
@@ -50,14 +51,20 @@ namespace AcmeCorpAPI.Controllers
                 return NotFound();
             }
 
-            return customer;
+            //return customer;
+            return Ok(new CustomerDTO() {
+                                Id = customer.Id,
+                                Name = customer.Name, 
+                                ContactInfo= new(){Email=customer.ContactInfo.Email,
+                                PhoneNumber=customer.ContactInfo.PhoneNumber}
+                               });
         }
 
          // GET: api/Customers/5/orders
         [HttpGet("{id}/orders")]
         public async Task<ActionResult<IEnumerable<OrderDTO>>> GetCustomerOrders(int id)
         {
-            //var customer = await _context.Customer.FindAsync(id);
+            // navigate the Orders relationship and retrieve the orders for the given customer
             var customer = await _context.Customer.Include(c => c.Orders).FirstOrDefaultAsync(c => c.Id == id);
 
             if (customer == null)
@@ -79,12 +86,17 @@ namespace AcmeCorpAPI.Controllers
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomer(int id, Customer customer)
+        public async Task<IActionResult> PutCustomer(int id, CustomerDTO customerDTO)
         {
-            if (id != customer.Id)
+            if (id != customerDTO.Id)
             {
                 return BadRequest();
             }
+
+            Customer customer = new () { Id = customerDTO.Id,
+                                         Name = customerDTO.Name, 
+                                         ContactInfo= new(){Email=customerDTO.ContactInfo.Email,
+                                                            PhoneNumber=customerDTO.ContactInfo.PhoneNumber} };
 
             _context.Entry(customer).State = EntityState.Modified;
 
