@@ -1,0 +1,11 @@
+version : '3'
+services: # Services to deploy
+  
+  acmecorpapi:
+    image: acmecorpapi #image name, Default:- Folder Name
+    build:
+      dockerfile : dockerfile # path to Dockerfile
+    ports:
+      - "3500:8080" # HOST_PORT:CONTAINER_PORT
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
